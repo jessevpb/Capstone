@@ -1,0 +1,99 @@
+---
+title       : Word Prediction Algorithm
+subtitle    : Data Science Specialization Capstone Project
+author      : Jesse Peterson-Brandt
+job         : 
+framework   : io2012        # {io2012, html5slides, shower, dzslides, ...}
+highlighter : highlight.js  # {highlight.js, prettify, highlight}
+hitheme     : tomorrow      # 
+widgets     : []            # {mathjax, quiz, bootstrap}
+mode        : selfcontained # {standalone, draft}
+knit        : slidify::knit2slides
+---
+
+## My Application
+
+My word prediction app takes a phrase of any length and predicts the next word using a back-off model.
+It begins by using up to four words and, if it does not find that exact phrase, works down to 
+predicting based on just the last word.
+
+```{r, echo = FALSE}
+setwd("~CSRAProject/Capstone/")
+load("markdown data.Rdata")
+require(caret)
+require(tm)
+require(RWeka)
+require(plyr) 
+require(knitr)
+```
+
+
+## Data
+
+Data were provided by the Coursera Data Science Specialization and Swiftkey. They included text from
+Twitter, news websites and blogs. I used this data to train my model and make predictions. 
+
+{img: "CourseTrackLogo.jpg"}
+{img: "swiktKeyLogo.jpg"}
+
+
+## Tokenization
+
+First we tokenize the data. I tokenized different n-grams separately. These are bigrams.
+
+```{r, echo = FALSE}
+control <- Weka_control(min=2, max=2, delimiters = "\\r\\n\\t.,;:\"()!? ")
+twitter <- scan("en_US/en_US.twitter.txt", character(0), sep = "\n")
+tweets <- sample(1:length(twitter), 100, replace = FALSE)
+```
+
+```{r}
+tweetTokens <- NGramTokenizer(twitter[tweets], control)
+tweetTokens[1:10]
+```
+
+Then we add up multiple instances of the same phrase.
+
+```{r}
+tweetCounts <- count(tweetTokens)
+tweetFilter <- grep(profanity, tweetCounts$x)
+tweetCounts <- tweetCounts[-tweetFilter,]
+head(tweetCounts)
+```
+
+
+## Convert to Data Frame
+
+The last thing was to convert the counts to a data frame for easier searching. I had help in this from
+StackOverflow: http://stackoverflow.com/questions/7069076/split-column-at-delimiter-in-data-frame
+
+```{r}
+tweetDF <- data.frame(do.call('rbind', strsplit(as.character(tweetCounts$x),' ',fixed=TRUE)))
+tweetDF <- cbind(tweetDF, tweetCounts$freq)
+head(tweetDF)
+```
+
+
+### The Function
+
+My function searches for up to a four-word phrase. I found my predictions to be understandable but very generic.
+Often the function returns "the", "and" and "to" or similar high-usage words.
+Here's a sampling of the code:
+```{r, eval = FALSE}
+        if(length(words) == 4 ) {
+            wordMatch <- quinCountdf[Reduce(intersect, list(
+                grep(paste("^", words[1], "$", sep = ""), quinCountdf$X1),
+                grep(paste("^", words[2], "$", sep = ""), quinCountdf$X2),
+                grep(paste("^", words[3], "$", sep = ""), quinCountdf$X3),
+                grep(paste("^", words[4], "$", sep = ""), quinCountdf$X4))),]
+```
+
+and here's the code running:
+
+```{r}
+next.word("this course was the")
+```
+
+Still some kinks to work out. =)
+
+

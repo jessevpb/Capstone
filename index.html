@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Word Prediction Algorithm</title>
+  <meta charset="utf-8">
+  <meta name="description" content="Word Prediction Algorithm">
+  <meta name="author" content="Jesse Peterson-Brandt">
+  <meta name="generator" content="slidify" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/default.css" media="all" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/phone.css" 
+    media="only screen and (max-device-width: 480px)" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/slidify.css" >
+  <link rel="stylesheet" href="libraries/highlighters/highlight.js/css/tomorrow.css" />
+  <base target="_blank"> <!-- This amazingness opens all links in a new tab. -->  <link rel=stylesheet href="./assets/css/ribbons.css"></link>
+
+  
+  <!-- Grab CDN jQuery, fall back to local if offline -->
+  <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.min.js"></script>
+  <script>window.jQuery || document.write('<script src="libraries/widgets/quiz/js/jquery.js"><\/script>')</script> 
+  <script data-main="libraries/frameworks/io2012/js/slides" 
+    src="libraries/frameworks/io2012/js/require-1.0.8.min.js">
+  </script>
+  
+  
+
+</head>
+<body style="opacity: 0">
+  <slides class="layout-widescreen">
+    
+    <!-- LOGO SLIDE -->
+        <slide class="title-slide segue nobackground">
+  <hgroup class="auto-fadein">
+    <h1>Word Prediction Algorithm</h1>
+    <h2>Data Science Specialization Capstone Project</h2>
+    <p>Jesse Peterson-Brandt<br/></p>
+  </hgroup>
+  <article></article>  
+</slide>
+    
+
+    <!-- SLIDES -->
+    <slide class="" id="slide-1" style="background:;">
+  <hgroup>
+    <h2>My Application</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>My word prediction app takes a phrase of any length and predicts the next word using a back-off model.
+It begins by using up to four words and, if it does not find that exact phrase, works down to 
+predicting based on just the last word.</p>
+
+<pre><code>## Error: cannot change working directory
+</code></pre>
+
+<pre><code>## Warning: cannot open compressed file &#39;markdown data.Rdata&#39;, probable
+## reason &#39;No such file or directory&#39;
+</code></pre>
+
+<pre><code>## Error: cannot open the connection
+</code></pre>
+
+<h2>Data</h2>
+
+<p>Data were provided by the Coursera Data Science Specialization and Swiftkey. They included text from
+Twitter, news websites and blogs. I used this data to train my model and make predictions. </p>
+
+<p>{img: &quot;CourseTrackLogo.jpg&quot;}
+{img: &quot;swiktKeyLogo.jpg&quot;}</p>
+
+<h2>Tokenization</h2>
+
+<p>First we tokenize the data. I tokenized different n-grams separately. These are bigrams.</p>
+
+<pre><code>## Warning: cannot open file &#39;en_US/en_US.twitter.txt&#39;: No such file or
+## directory
+</code></pre>
+
+<pre><code>## Error: cannot open the connection
+</code></pre>
+
+<pre><code>## Error: object &#39;twitter&#39; not found
+</code></pre>
+
+<pre><code class="r">tweetTokens &lt;- NGramTokenizer(twitter[tweets], control)
+</code></pre>
+
+<pre><code>## Error: object &#39;twitter&#39; not found
+</code></pre>
+
+<pre><code class="r">tweetTokens[1:10]
+</code></pre>
+
+<pre><code>## Error: object &#39;tweetTokens&#39; not found
+</code></pre>
+
+<p>Then we add up multiple instances of the same phrase.</p>
+
+<pre><code class="r">tweetCounts &lt;- count(tweetTokens)
+</code></pre>
+
+<pre><code>## Error: object &#39;tweetTokens&#39; not found
+</code></pre>
+
+<pre><code class="r">tweetFilter &lt;- grep(profanity, tweetCounts$x)
+</code></pre>
+
+<pre><code>## Error: object &#39;tweetCounts&#39; not found
+</code></pre>
+
+<pre><code class="r">tweetCounts &lt;- tweetCounts[-tweetFilter,]
+</code></pre>
+
+<pre><code>## Error: object &#39;tweetCounts&#39; not found
+</code></pre>
+
+<pre><code class="r">head(tweetCounts)
+</code></pre>
+
+<pre><code>## Error: object &#39;tweetCounts&#39; not found
+</code></pre>
+
+<h2>Convert to Data Frame</h2>
+
+<p>The last thing was to convert the counts to a data frame for easier searching. I had help in this from
+StackOverflow: <a href="http://stackoverflow.com/questions/7069076/split-column-at-delimiter-in-data-frame">http://stackoverflow.com/questions/7069076/split-column-at-delimiter-in-data-frame</a></p>
+
+<pre><code class="r">tweetDF &lt;- data.frame(do.call(&#39;rbind&#39;, strsplit(as.character(tweetCounts$x),&#39; &#39;,fixed=TRUE)))
+</code></pre>
+
+<pre><code>## Error: object &#39;tweetCounts&#39; not found
+</code></pre>
+
+<pre><code class="r">tweetDF &lt;- cbind(tweetDF, tweetCounts$freq)
+</code></pre>
+
+<pre><code>## Error: object &#39;tweetDF&#39; not found
+</code></pre>
+
+<pre><code class="r">head(tweetDF)
+</code></pre>
+
+<pre><code>## Error: object &#39;tweetDF&#39; not found
+</code></pre>
+
+<h3>The Function</h3>
+
+<p>My function searches for up to a four-word phrase. I found my predictions to be understandable but very generic.
+Often the function returns &quot;the&quot;, &quot;and&quot; and &quot;to&quot; or similar high-usage words.
+Here&#39;s a sampling of the code:</p>
+
+<pre><code class="r">        if(length(words) == 4 ) {
+            wordMatch &lt;- quinCountdf[Reduce(intersect, list(
+                grep(paste(&quot;^&quot;, words[1], &quot;$&quot;, sep = &quot;&quot;), quinCountdf$X1),
+                grep(paste(&quot;^&quot;, words[2], &quot;$&quot;, sep = &quot;&quot;), quinCountdf$X2),
+                grep(paste(&quot;^&quot;, words[3], &quot;$&quot;, sep = &quot;&quot;), quinCountdf$X3),
+                grep(paste(&quot;^&quot;, words[4], &quot;$&quot;, sep = &quot;&quot;), quinCountdf$X4))),]
+</code></pre>
+
+<p>and here&#39;s the code running:</p>
+
+<pre><code class="r">next.word(&quot;this course was the&quot;)
+</code></pre>
+
+<pre><code>## Error: could not find function &quot;next.word&quot;
+</code></pre>
+
+<p>Still some kinks to work out. =)</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+    <slide class="backdrop"></slide>
+  </slides>
+  <div class="pagination pagination-small" id='io2012-ptoc' style="display:none;">
+    <ul>
+      <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=1 title='My Application'>
+         1
+      </a>
+    </li>
+  </ul>
+  </div>  <!--[if IE]>
+    <script 
+      src="http://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js">  
+    </script>
+    <script>CFInstall.check({mode: 'overlay'});</script>
+  <![endif]-->
+</body>
+  <!-- Load Javascripts for Widgets -->
+  
+  <!-- LOAD HIGHLIGHTER JS FILES -->
+  <script src="libraries/highlighters/highlight.js/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <!-- DONE LOADING HIGHLIGHTER JS FILES -->
+   
+  </html>

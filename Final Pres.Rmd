@@ -1,0 +1,102 @@
+---
+title       : Word Prediction Algorithm
+subtitle    : Data Science Specialization Capstone Project
+author      : Jesse Peterson-Brandt
+job         : 
+framework   : io2012        # {io2012, html5slides, shower, dzslides, ...}
+highlighter : highlight.js  # {highlight.js, prettify, highlight}
+hitheme     : tomorrow      # 
+widgets     : []            # {mathjax, quiz, bootstrap}
+mode        : selfcontained # {standalone, draft}
+knit        : slidify::knit2slides
+---
+
+## My Application
+
+My word prediction app takes a phrase of any length and predicts the next word using a back-off model.
+It begins by using up to four words and, if it does not find that exact phrase, works down to 
+predicting based on just the last word.
+
+```{r, echo = FALSE}
+require(caret)
+require(tm)
+require(RWeka)
+require(plyr) 
+require(knitr)
+```
+
+## Data
+
+Data were provided by the Coursera Data Science Specialization and Swiftkey. They included text from
+Twitter, news websites and blogs. I used this data to train my model and make predictions. 
+
+![Data Science Specialization](CourseTrackLogo.jpg)
+<img src="swiftkeyLogo.png" width = "400px" height = "90px" />
+
+---
+## Tokenization
+First we tokenize the data. I tokenized different n-grams separately. These are bigrams.
+
+```{r, echo = FALSE}
+control <- Weka_control(min=2, max=2, delimiters = "\\r\\n\\t.,;:\"()!? ")
+twitter <- readRDS("twitter100.rds")
+profanity <- "(?i)fuck|^arse$|^ass[cbchjkmprw]|^beatoff$|^beat.off$|^biatch$|^bitch[^ ]|^blowjob$|^byatch$|cameljockey|cameltoe|carpetmuncher|cherrypopper|choad|chode|coondog|^cock[bs]|crackwhore|crack.whore|^crap|^cum[dfjs]|^cum$|^cunt|^dago$|^damn|^darky|^darkie|^dego$|dick[hlw]|^dong$|^fag$|^faggot$|^fart$|^felch|^godam|^goddam|^handjob|^honkers|^hooker|^ho$|^hore$|^horny|^jackoff|^jerkoff|^jiz|^kike$|^kyke|^krap|^kum[^q]|^kunt|^love[jmpgb]|^milf$|^mastur|^mofo|^muffdive|^negro$|^nigga$|^nigger$|^nookie|^phuk|^piss|^pooper|^pube|^puss.|^queef|^shat|shit|^skank|^slut|^snig|^spick$|^stripclub|^strip.club|^titty|^tittie|^tranny|^trannie|^twat|^wank|^wetback|^whore|whore$|\u0092|\u0094|\u0095|\u0096|\u0097|\u0098|\u0099"
+```
+
+```{r}
+tweetTokens <- NGramTokenizer(twitter, control)
+tweetTokens[1:10]
+```
+
+```{r, echo = FALSE}
+tweetCount <- count(tweetTokens)
+tweetFilt <- grep(profanity, tweetCount$x)
+tweetCount <- tweetCount[-tweetFilt,]
+```
+
+Then we add up multiple instances of the same phrase.
+
+```{r}
+tweetCount[300:303,]
+```
+
+---
+## Convert to Data Frame
+
+The last thing was to convert the counts to a data frame for easier searching. I had help in this from
+StackOverflow: http://stackoverflow.com/questions/7069076/split-column-at-delimiter-in-data-frame
+
+```{r}
+tweetDF <- data.frame(do.call('rbind', strsplit(as.character(tweetCount$x),' ',fixed=TRUE)))
+tweetDF <- cbind(tweetDF, tweetCount$freq)
+tweetDF[50:55,]
+```
+
+---
+## The Function
+
+My function searches for up to a four-word phrase. I found my predictions to be understandable but very generic.
+Often the function returns "the", "and" and "to" or similar high-usage words.
+Here's a sampling of the code:
+```{r, eval = FALSE}
+        if(length(words) == 4 ) {
+            wordMatch <- quinCountdf[Reduce(intersect, list(
+                grep(paste("^", words[1], "$", sep = ""), quinCountdf$X1),
+                grep(paste("^", words[2], "$", sep = ""), quinCountdf$X2),
+                grep(paste("^", words[3], "$", sep = ""), quinCountdf$X3),
+                grep(paste("^", words[4], "$", sep = ""), quinCountdf$X4))),]
+```
+
+and here's the code running:
+
+```{r, echo = FALSE}
+next.word <- function(x) "first"
+```
+
+```{r}
+next.word("this course was the")
+```
+
+Still some kinks to work out. =)
+
+

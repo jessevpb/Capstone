@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Word Prediction Algorithm</title>
+  <meta charset="utf-8">
+  <meta name="description" content="Word Prediction Algorithm">
+  <meta name="author" content="Jesse Peterson-Brandt">
+  <meta name="generator" content="slidify" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/default.css" media="all" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/phone.css" 
+    media="only screen and (max-device-width: 480px)" >
+  <link rel="stylesheet" href="libraries/frameworks/io2012/css/slidify.css" >
+  <link rel="stylesheet" href="libraries/highlighters/highlight.js/css/tomorrow.css" />
+  <base target="_blank"> <!-- This amazingness opens all links in a new tab. -->  <link rel=stylesheet href="./assets/css/ribbons.css"></link>
+
+  
+  <!-- Grab CDN jQuery, fall back to local if offline -->
+  <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.min.js"></script>
+  <script>window.jQuery || document.write('<script src="libraries/widgets/quiz/js/jquery.js"><\/script>')</script> 
+  <script data-main="libraries/frameworks/io2012/js/slides" 
+    src="libraries/frameworks/io2012/js/require-1.0.8.min.js">
+  </script>
+  
+  
+
+</head>
+<body style="opacity: 0">
+  <slides class="layout-widescreen">
+    
+    <!-- LOGO SLIDE -->
+        <slide class="title-slide segue nobackground">
+  <hgroup class="auto-fadein">
+    <h1>Word Prediction Algorithm</h1>
+    <h2>Data Science Specialization Capstone Project</h2>
+    <p>Jesse Peterson-Brandt<br/></p>
+  </hgroup>
+  <article></article>  
+</slide>
+    
+
+    <!-- SLIDES -->
+    <slide class="" id="slide-1" style="background:;">
+  <hgroup>
+    <h2>My Application</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>My word prediction app takes a phrase of any length and predicts the next word using a back-off model.
+It begins by using up to four words and, if it does not find that exact phrase, works down to 
+predicting based on just the last word.</p>
+
+<h2>Data</h2>
+
+<p>Data were provided by the Coursera Data Science Specialization and Swiftkey. They included text from
+Twitter, news websites and blogs. I used this data to train my model and make predictions. </p>
+
+<p><img src="CourseTrackLogo.jpg" alt="Data Science Specialization">
+<img src="swiftkeyLogo.png" width = "400px" height = "90px" /></p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-2" style="background:;">
+  <hgroup>
+    <h2>Tokenization</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>First we tokenize the data. I tokenized different n-grams separately. These are bigrams.</p>
+
+<pre><code class="r">tweetTokens &lt;- NGramTokenizer(twitter, control)
+tweetTokens[1:10]
+</code></pre>
+
+<pre><code>##  [1] &quot;How are&quot;    &quot;are you&quot;    &quot;you Btw&quot;    &quot;Btw thanks&quot; &quot;thanks for&quot;
+##  [6] &quot;for the&quot;    &quot;the RT&quot;     &quot;RT You&quot;     &quot;You gonna&quot;  &quot;gonna be&quot;
+</code></pre>
+
+<p>Then we add up multiple instances of the same phrase.</p>
+
+<pre><code class="r">tweetCount[300:303,]
+</code></pre>
+
+<pre><code>##                 x freq
+## 301 for advancing    1
+## 302  for dropping    1
+## 303   for Holiday    1
+## 304      for long    1
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-3" style="background:;">
+  <hgroup>
+    <h2>Convert to Data Frame</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>The last thing was to convert the counts to a data frame for easier searching. I had help in this from
+StackOverflow: <a href="http://stackoverflow.com/questions/7069076/split-column-at-delimiter-in-data-frame">http://stackoverflow.com/questions/7069076/split-column-at-delimiter-in-data-frame</a></p>
+
+<pre><code class="r">tweetDF &lt;- data.frame(do.call(&#39;rbind&#39;, strsplit(as.character(tweetCount$x),&#39; &#39;,fixed=TRUE)))
+tweetDF &lt;- cbind(tweetDF, tweetCount$freq)
+tweetDF[50:55,]
+</code></pre>
+
+<pre><code>##    X1       X2 tweetCount$freq
+## 50  a    great               2
+## 51  a  liberal               1
+## 52  a      lot               1
+## 53  A      LOT               1
+## 54  a millenia               1
+## 55  a    movie               1
+</code></pre>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+<slide class="" id="slide-4" style="background:;">
+  <hgroup>
+    <h2>The Function</h2>
+  </hgroup>
+  <article data-timings="">
+    <p>My function searches for up to a four-word phrase. I found my predictions to be understandable but very generic.
+Often the function returns &quot;the&quot;, &quot;and&quot; and &quot;to&quot; or similar high-usage words.
+Here&#39;s a sampling of the code:</p>
+
+<pre><code class="r">        if(length(words) == 4 ) {
+            wordMatch &lt;- quinCountdf[Reduce(intersect, list(
+                grep(paste(&quot;^&quot;, words[1], &quot;$&quot;, sep = &quot;&quot;), quinCountdf$X1),
+                grep(paste(&quot;^&quot;, words[2], &quot;$&quot;, sep = &quot;&quot;), quinCountdf$X2),
+                grep(paste(&quot;^&quot;, words[3], &quot;$&quot;, sep = &quot;&quot;), quinCountdf$X3),
+                grep(paste(&quot;^&quot;, words[4], &quot;$&quot;, sep = &quot;&quot;), quinCountdf$X4))),]
+</code></pre>
+
+<p>and here&#39;s the code running:</p>
+
+<pre><code class="r">next.word(&quot;this course was the&quot;)
+</code></pre>
+
+<pre><code>## [1] &quot;first&quot;
+</code></pre>
+
+<p>Still some kinks to work out. =)</p>
+
+  </article>
+  <!-- Presenter Notes -->
+</slide>
+
+    <slide class="backdrop"></slide>
+  </slides>
+  <div class="pagination pagination-small" id='io2012-ptoc' style="display:none;">
+    <ul>
+      <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=1 title='My Application'>
+         1
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=2 title='Tokenization'>
+         2
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=3 title='Convert to Data Frame'>
+         3
+      </a>
+    </li>
+    <li>
+      <a href="#" target="_self" rel='tooltip' 
+        data-slide=4 title='The Function'>
+         4
+      </a>
+    </li>
+  </ul>
+  </div>  <!--[if IE]>
+    <script 
+      src="http://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js">  
+    </script>
+    <script>CFInstall.check({mode: 'overlay'});</script>
+  <![endif]-->
+</body>
+  <!-- Load Javascripts for Widgets -->
+  
+  <!-- LOAD HIGHLIGHTER JS FILES -->
+  <script src="libraries/highlighters/highlight.js/highlight.pack.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script>
+  <!-- DONE LOADING HIGHLIGHTER JS FILES -->
+   
+  </html>
