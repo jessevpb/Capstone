@@ -34,6 +34,7 @@ Twitter, news websites and blogs. I used this data to train my model and make pr
 <img src="swiftkeyLogo.png" width = "400px" height = "90px" />
 
 ---
+
 ## Tokenization
 First we tokenize the data. I tokenized different n-grams separately. These are bigrams.
 
@@ -61,6 +62,7 @@ tweetCount[300:303,]
 ```
 
 ---
+
 ## Convert to Data Frame
 
 The last thing was to convert the counts to a data frame for easier searching. I had help in this from
@@ -73,6 +75,7 @@ tweetDF[50:55,]
 ```
 
 ---
+
 ## The Function
 
 My function searches for up to a four-word phrase. I found my predictions to be understandable but very generic.
